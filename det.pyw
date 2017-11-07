@@ -11,6 +11,7 @@
 
 import os
 import sys
+import time
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from PyQt4.QtSql import *
@@ -31,92 +32,104 @@ def createFakeData():
 
     print "Dropping tables..."
     query = QSqlQuery()
-    query.exec_("DROP TABLE assets")
-    query.exec_("DROP TABLE logs")
-    query.exec_("DROP TABLE actions")
-    query.exec_("DROP TABLE categories")
+    #must drop table bind first because of foreign key.
+    query.exec_("DROP TABLE bind")
+    query.exec_("DROP TABLE crystal")
+    query.exec_("DROP TABLE board")
+
     QApplication.processEvents()
 
     print "Creating tables..."
-    query.exec_("""CREATE TABLE actions (
+    query.exec_("""CREATE TABLE crystal (
                 id INTEGER PRIMARY KEY AUTO_INCREMENT UNIQUE NOT NULL,
-                name VARCHAR(20) NOT NULL,
-                description VARCHAR(40) NOT NULL)""")
-    query.exec_("""CREATE TABLE categories (
+                sn VARCHAR(20) UNIQUE NOT NULL,
+                descrip VARCHAR(40))""")
+    query.exec_("""CREATE TABLE board (
                 id INTEGER PRIMARY KEY AUTO_INCREMENT UNIQUE NOT NULL,
-                name VARCHAR(20) NOT NULL,
-                description VARCHAR(40) NOT NULL)""")
-    query.exec_("""CREATE TABLE assets (
+                sn VARCHAR(20) UNIQUE NOT NULL,
+                descrip VARCHAR(40))""")
+    query.exec_("""CREATE TABLE bind (
                 id INTEGER PRIMARY KEY AUTO_INCREMENT UNIQUE NOT NULL,
-                name VARCHAR(40) NOT NULL,
-                categoryid INTEGER NOT NULL,
-                room VARCHAR(4) NOT NULL,
-                FOREIGN KEY (categoryid) REFERENCES categories(id))""")
-    query.exec_("""CREATE TABLE logs (
-                id INTEGER PRIMARY KEY AUTO_INCREMENT UNIQUE NOT NULL,
-                assetid INTEGER NOT NULL,
-                date DATE NOT NULL,
-                actionid INTEGER NOT NULL,
-                FOREIGN KEY (assetid) REFERENCES assets(id),
-                FOREIGN KEY (actionid) REFERENCES actions(id))""")
+                crystalid INTEGER NOT NULL,
+                boardid INTEGER NOT NULL,
+                status ENUM('binding', 'bound', 'debinding') NOT NULL,
+                time DATETIME NOT NULL,
+                operator VARCHAR(20) NOT NULL,
+                descrip VARCHAR(40),
+                FOREIGN KEY (crystalid) REFERENCES crystal(id),
+                FOREIGN KEY (boardid) REFERENCES board(id))""")
+
     QApplication.processEvents()
 
     print "Populating tables..."
-    query.exec_("INSERT INTO actions (name, description) "
-                "VALUES ('Acquired', 'When installed')")
-    query.exec_("INSERT INTO actions (name, description) "
-                "VALUES ('Broken', 'When failed and unusable')")
-    query.exec_("INSERT INTO actions (name, description) "
-                "VALUES ('Repaired', 'When back in service')")
-    query.exec_("INSERT INTO actions (name, description) "
-                "VALUES ('Routine maintenance', "
-                "'When tested, refilled, etc.')")
-    query.exec_("INSERT INTO categories (name, description) VALUES "
-                "('Computer Equipment', "
-                "'Monitors, System Units, Peripherals, etc.')")
-    query.exec_("INSERT INTO categories (name, description) VALUES "
-                "('Furniture', 'Chairs, Tables, Desks, etc.')")
-    query.exec_("INSERT INTO categories (name, description) VALUES "
-                "('Electrical Equipment', 'Non-computer electricals')")
-    today = QDate.currentDate()
-    floors = range(1, 12) + range(14, 28)
-    monitors = (('17" LCD Monitor', 1),
-                ('20" LCD Monitor', 1),
-                ('21" LCD Monitor', 1),
-                ('21" CRT Monitor', 1),
-                ('24" CRT Monitor', 1))
-    computers = (("Computer (32-bit/80GB/0.5GB)", 1),
-                 ("Computer (32-bit/100GB/1GB)", 1),
-                 ("Computer (32-bit/120GB/1GB)", 1),
-                 ("Computer (64-bit/240GB/2GB)", 1),
-                 ("Computer (64-bit/320GB/4GB)", 1))
-    printers = (("Laser Printer (4 ppm)", 1),
-                ("Laser Printer (6 ppm)", 1),
-                ("Laser Printer (8 ppm)", 1),
-                ("Laser Printer (16 ppm)", 1))
-    chairs = (("Secretary Chair", 2),
-              ("Executive Chair (Basic)", 2),
-              ("Executive Chair (Ergonimic)", 2),
-              ("Executive Chair (Hi-Tech)", 2))
-    desks = (("Desk (Basic, 3 drawer)", 2),
-             ("Desk (Standard, 3 drawer)", 2),
-             ("Desk (Executive, 3 drawer)", 2),
-             ("Desk (Executive, 4 drawer)", 2),
-             ("Desk (Large, 4 drawer)", 2))
-    furniture = (("Filing Cabinet (3 drawer)", 2),
-                 ("Filing Cabinet (4 drawer)", 2),
-                 ("Filing Cabinet (5 drawer)", 2),
-                 ("Bookcase (4 shelves)", 2),
-                 ("Bookcase (6 shelves)", 2),
-                 ("Table (4 seater)", 2),
-                 ("Table (8 seater)", 2),
-                 ("Table (12 seater)", 2))
-    electrical = (("Fan (3 speed)", 3),
-                  ("Fan (5 speed)", 3),
-                  ("Photocopier (4 ppm)", 3),
-                  ("Photocopier (6 ppm)", 3),
-                  ("Photocopier (8 ppm)", 3),
-                  ("Shredder", 3))
+    query.exec_("INSERT INTO crystal (sn) "
+                "VALUES ('6G0124')")
+    query.exec_("INSERT INTO crystal (sn) "
+                "VALUES ('6G0125')")
+    query.exec_("INSERT INTO crystal (sn) "
+                "VALUES ('6G0126')")
+    
+    query.exec_("INSERT INTO board (sn) VALUES "
+                "('HJ1438041')")
+    query.exec_("INSERT INTO board (sn) VALUES "
+                "('HJ1438042')")
+    query.exec_("INSERT INTO board (sn) VALUES "
+                "('HJ1438043')")
+    
+    sn="6G0127"
+    query.exec_("SELECT id FROM crystal WHERE sn='"+sn+"'" )
+    
+    while not query.next():
+        print "insert new crystal"
+        query.prepare("INSERT INTO crystal (sn) "
+                "VALUES (:sn)")
+        query.bindValue(":sn", sn)
+        query.exec_()
+        query.exec_("SELECT id FROM crystal WHERE sn='"+sn+"'" )
+
+    crystalid = query.value(0).toInt()[0]
+    print crystalid
+        
+    sn="HJ1438044"
+    query.exec_("SELECT id FROM board WHERE sn='"+sn+"'" )
+    
+    while not query.next():
+        print "insert new board"
+        query.prepare("INSERT INTO board (sn) "
+                "VALUES (:sn)")
+        query.bindValue(":sn", sn)
+        query.exec_()
+        query.exec_("SELECT id FROM board WHERE sn='"+sn+"'" )
+        
+    boardid = query.value(0).toInt()[0]
+    print boardid
+ 
+    query.prepare("INSERT INTO bind (crystalid, boardid, status, time, operator) "
+                     "VALUES (:crystalid, :boardid, :status, now(), user())") 
+    query.bindValue(":crystalid", crystalid)
+    query.bindValue(":boardid", boardid)
+    query.bindValue(":status", "binding")
+    #query.bindValue(":time", "now()")
+    #query.bindValue(":operator", "user()")
+    query.exec_()
+        
+    time.sleep(5)
+    
+    query.prepare("UPDATE bind set status='bound' "
+                     "where crystalid="+str(crystalid))
+    query.exec_()
+    
+    query.prepare("INSERT INTO bind (crystalid, boardid, status, time, operator) "
+                     "VALUES (:crystalid, :boardid, :status, now(), user())") 
+    query.bindValue(":crystalid", crystalid)
+    query.bindValue(":boardid", boardid)
+    query.bindValue(":status", "debinding")
+    query.exec_()
+        
+'''
+    query.prepare("INSERT INTO bind (crystalid, boardid, time, actionid) "
+                     "VALUES (:assetid, :date, :actionid)")
+                     
     query.prepare("INSERT INTO assets (name, categoryid, room) "
                   "VALUES (:name, :categoryid, :room)")
     logQuery = QSqlQuery()
@@ -206,7 +219,7 @@ def createFakeData():
         print "%d: %s [%s] %s" % (id, name, category, room)
     QApplication.processEvents()
 
-
+'''
 class ReferenceDataDlg(QDialog):
 
     def __init__(self, table, title, parent=None):
