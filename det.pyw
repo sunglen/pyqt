@@ -121,14 +121,21 @@ class MainForm(QDialog,
         self.updateUi()
 
     def updateUi(self):
-        if self.crystalLine.text().isEmpty() and self.boardLine.text().isEmpty():
+        #validate user input, min character numbers is useless.
+        self.crystalLine.setValidator(QRegExpValidator(QRegExp("[0-9A-Za-z\-]{6,20}"), self))
+        self.boardLine.setValidator(QRegExpValidator(QRegExp("[0-9A-Za-z\-]{7,20}"), self))
+        
+        #validate min character numbers
+        #if self.crystalLine.text().isEmpty() and self.boardLine.text().isEmpty():
+        if self.crystalLine.text().length()<6 and self.boardLine.text().length()<7:
             self.queryButton.setEnabled(False)
             self.unbindButton.setEnabled(False)
         else:
             self.queryButton.setEnabled(True)
             self.unbindButton.setEnabled(True)
             
-        if self.crystalLine.text().isEmpty() or self.boardLine.text().isEmpty():
+        #if self.crystalLine.text().isEmpty() or self.boardLine.text().isEmpty():
+        if self.crystalLine.text().length()<6 or self.boardLine.text().length()<7:
             self.bindButton.setEnabled(False)
         else:
             self.bindButton.setEnabled(True)
@@ -147,6 +154,27 @@ class MainForm(QDialog,
         crystal=self.crystalLine.text()
         board=self.boardLine.text()
         self.bind(crystal, board)
+    
+    @pyqtSignature("")
+    def on_unbindButton_clicked(self):
+        print "unbind crystal "+self.crystalLine.text()+" from board "+self.boardLine.text()
+        crystal=self.crystalLine.text()
+        board=self.boardLine.text()
+        result=self.unbind(crystal, board)
+        if result[0]:
+            print "done: unbind crystal sn#"+crystal+" from board sn#"+board
+        
+        if result[1]:
+            print "done: unbind crystal sn#"+crystal
+            
+        if result[2]:
+            print "done: unbind  board sn#"+board
+
+        #[detached, crystalid, boardid]=self.unbind(crystal, board)
+        #if detached:
+        #    print "done: unbind crystal sn#"+self.getCrystalSn(crystalid)+" from board sn#"+self.getBoardSn(boardid)
+        #else:
+        #    print "do again: unbind crystal sn#"+self.getCrystalSn(crystalid)+" from board sn#"+self.getBoardSn(boardid)
     
     @pyqtSignature("")
     def on_queryButton_clicked(self):
@@ -187,7 +215,18 @@ class MainForm(QDialog,
     def bind(self, crystal, board):
         crystalid=self.addCrystal(crystal)
         boardid=self.addBoard(board)
-        print "bind crystal id"+str(crystalid)+" to board id"+str(boardid)
+        print "bind crystal id "+str(crystalid)+" to board id "+str(boardid)
+        if self.isBinding(crystalid, boardid):
+            print "impossible, binding already"
+            return True
+        if self.isBinding(crystalid):
+            print "failed, crystal is binding already, unbind first"
+            #self.getCrystalBinding(crystalid)
+            return False
+        if self.isBinding(0, boardid):
+            print "failed, board is binding already, unbind first"
+            #self.getBoardBinding(boardid)
+            return False
         query = QSqlQuery()
         query.prepare("INSERT INTO bind (crystalid, boardid, status, time, operator) "
                      "VALUES (:crystalid, :boardid, :status, now(), user())") 
@@ -195,22 +234,131 @@ class MainForm(QDialog,
         query.bindValue(":boardid", boardid)
         query.bindValue(":status", "binding")
         query.exec_()
-        
-    def assetChanged(self, index):
-        if index.isValid():
-            record = self.assetModel.record(index.row())
-            id = record.value("id").toInt()[0]
-            self.logModel.setFilter(QString("assetid = %1").arg(id))
-        else:
-            self.logModel.setFilter("assetid = -1")
-        self.logModel.reset() # workaround for Qt <= 4.3.3/SQLite bug
-        self.logModel.select()
-        self.logView.horizontalHeader().setVisible(
-                self.logModel.rowCount() > 0)
-        if PYQT_VERSION_STR < "4.1.0":
-            self.logView.setColumnHidden(ID, True)
-            self.logView.setColumnHidden(ASSETID, True)
+        return True
 
+    def unbind(self, crystal, board):
+        crystalid=self.getCrystalId(crystal)
+        boardid=self.getBoardId(board)
+        
+        result=[False, False, False]
+        
+        if crystalid and boardid:
+            if self.isBinding(crystalid, boardid):
+                return [self.detach(crystalid, boardid), False, False]
+        
+        if crystalid:
+            if self.isBinding(crystalid):
+                boardid=self.getCrystalBinding(crystalid)
+                #print "impossible, crystal is binding to boardid %d"%boardid
+                #return [self.detach(crystalid, boardid), crystalid, boardid]
+                result[1]=self.detach(crystalid, boardid)
+        
+        if boardid:    
+            if self.isBinding(0, boardid):
+                crystalid=self.getBoardBinding(boardid)
+                #print "impossible, board is binding to crystalid %d"%crystalid
+                #return [False, crystalid, boardid]
+                result[2]=self.detach(crystalid, boardid)
+                
+        #return [result, crystalid, boardid]
+        return result
+        
+    #There are two steps of detach: first insert then update
+    def detach(self, crystalid, boardid):
+        query = QSqlQuery()
+        print "detach crystal id "+str(crystalid)+" from board id "+str(boardid)
+        #insert unbind record
+        query.prepare("INSERT INTO bind (crystalid, boardid, status, time, operator) "
+                     "VALUES (:crystalid, :boardid, :status, now(), user())") 
+        query.bindValue(":crystalid", crystalid)
+        query.bindValue(":boardid", boardid)
+        query.bindValue(":status", "unbind")
+        query.exec_()
+        
+        #update status from binding to bound
+        query.prepare("UPDATE bind set status='bound' "
+                         "where crystalid="+str(crystalid)+" and boardid="+str(boardid)+" and status='binding'")
+        query.exec_()
+        
+        #check
+        if self.isBinding(crystalid, boardid):
+            return False
+        else:
+            return True
+    
+    def isBinding(self, crystalid, boardid=0):
+        query = QSqlQuery()
+        if crystalid and boardid:
+            query.exec_("SELECT status FROM bind WHERE crystalid="+str(crystalid)+" and boardid="+str(boardid))
+        elif crystalid:
+            query.exec_("SELECT status FROM bind WHERE crystalid="+str(crystalid))
+        elif boardid:
+            query.exec_("SELECT status FROM bind WHERE boardid="+str(boardid))
+        else:
+            #cannot be all zero
+            sys.exit(1)
+        
+        while query.next():
+            if query.value(0).toString() == "binding":
+                #print query.value(0).toString()
+                return True
+            
+        return False
+    
+
+    def getCrystalBinding(self, crystalid):
+        query = QSqlQuery()
+        query.exec_("SELECT boardid FROM bind WHERE crystalid="+str(crystalid)+" and status='binding'")
+        if query.next():
+            boardid = query.value(0).toInt()[0]
+            print "return boardid "+str(boardid)
+            return boardid
+        else:
+            return 0
+
+    def getBoardBinding(self, boardid):
+        query = QSqlQuery()
+        query.exec_("SELECT crystalid FROM bind WHERE boardid="+str(boardid)+" and status='binding'")
+        if query.next():
+            crystalid = query.value(0).toInt()[0]
+            print "return crystalid "+str(crystalid)
+            return crystalid
+        else:
+            return 0
+        
+    def getCrystalSn(self, id):
+        query = QSqlQuery()
+        query.exec_("SELECT sn FROM crystal WHERE id="+str(id))
+        if query.next():
+            return query.value(0).toString()
+        else:
+            return ''
+
+    def getBoardSn(self, id):
+        query = QSqlQuery()
+        query.exec_("SELECT sn FROM board WHERE id="+str(id))
+        if query.next():
+            return query.value(0).toString()
+        else:
+            return ''
+
+    def getCrystalId(self, sn):
+        query = QSqlQuery()
+        query.exec_("SELECT id FROM crystal WHERE sn='"+sn+"'" )
+    
+        if not query.next():
+            return 0
+            
+        return query.value(0).toInt()[0]
+
+    def getBoardId(self, sn):
+        query = QSqlQuery()
+        query.exec_("SELECT id FROM board WHERE sn='"+sn+"'" )
+    
+        if not query.next():
+            return 0
+            
+        return query.value(0).toInt()[0]
 
     def addAsset(self):
         row = self.assetView.currentIndex().row() \
@@ -267,27 +415,6 @@ class MainForm(QDialog,
         QSqlDatabase.database().commit()
         self.assetChanged(self.assetView.currentIndex())
 
-
-    def addAction(self):
-        index = self.assetView.currentIndex()
-        if not index.isValid():
-            return
-        QSqlDatabase.database().transaction()
-        record = self.assetModel.record(index.row())
-        assetid = record.value(ID).toInt()[0]
-
-        row = self.logModel.rowCount()
-        self.logModel.insertRow(row)
-        self.logModel.setData(self.logModel.index(row, ASSETID),
-                              QVariant(assetid))
-        self.logModel.setData(self.logModel.index(row, DATE),
-                              QVariant(QDate.currentDate()))
-        QSqlDatabase.database().commit()
-        index = self.logModel.index(row, ACTIONID)
-        self.logView.setCurrentIndex(index)
-        self.logView.edit(index)
-
-
     def deleteAction(self):
         index = self.logView.currentIndex()
         if not index.isValid():
@@ -306,16 +433,6 @@ class MainForm(QDialog,
             return
         self.logModel.removeRow(index.row())
         self.logModel.submitAll()
-
-
-    def editActions(self):
-        form = ReferenceDataDlg("actions", "Action", self)
-        form.exec_()
-
-
-    def editCategories(self):
-        form = ReferenceDataDlg("categories", "Category", self)
-        form.exec_()
 
 
 def main():
