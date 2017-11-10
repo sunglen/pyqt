@@ -123,11 +123,11 @@ class MainForm(QDialog,
     def updateUi(self):
         #validate user input, min character numbers is useless.
         self.crystalLine.setValidator(QRegExpValidator(QRegExp("[0-9A-Za-z\-]{6,20}"), self))
-        self.boardLine.setValidator(QRegExpValidator(QRegExp("[0-9A-Za-z\-]{7,20}"), self))
+        self.boardLine.setValidator(QRegExpValidator(QRegExp("[0-9A-Za-z\-]{9,20}"), self))
         
         #validate min character numbers
         #if self.crystalLine.text().isEmpty() and self.boardLine.text().isEmpty():
-        if self.crystalLine.text().length()<6 and self.boardLine.text().length()<7:
+        if self.crystalLine.text().length()<6 and self.boardLine.text().length()<9:
             self.queryButton.setEnabled(False)
             self.unbindButton.setEnabled(False)
         else:
@@ -135,7 +135,7 @@ class MainForm(QDialog,
             self.unbindButton.setEnabled(True)
             
         #if self.crystalLine.text().isEmpty() or self.boardLine.text().isEmpty():
-        if self.crystalLine.text().length()<6 or self.boardLine.text().length()<7:
+        if self.crystalLine.text().length()<6 or self.boardLine.text().length()<9:
             self.bindButton.setEnabled(False)
         else:
             self.bindButton.setEnabled(True)
@@ -153,80 +153,124 @@ class MainForm(QDialog,
         print "bind crystal "+self.crystalLine.text()+" to board "+self.boardLine.text()
         crystal=self.crystalLine.text()
         board=self.boardLine.text()
-        self.bind(crystal, board)
-    
+        
+        result=self.bind(crystal, board)
+        
+        #crystalid or boardid is invalid, fatal error
+        if not result[3]:
+            print "Crystal record is NOT exist and CANNOT be added"
+            sys.exit(1)
+            
+        if not result[4]:
+            print "Board record is NOT exist and CANNOT be added"
+            sys.exit(1)
+        
+        if result[0] and result[1] and result[2]:
+            print "done: binding crystal sn#"+crystal+" to board sn#"+board
+        elif not result[0] and result[1] and result[2]:
+            print "failed: already binding crystal sn#"+crystal+" to board sn#"+board
+        elif result[0] and not result[1] and result[2]:
+            print "falied: already binding crystal sn#"+crystal+" to board sn#"+self.getBoardSn(result[4])
+        elif result[0] and result[1] and not result[2]:
+            print "falied: already binding crystal sn#"+self.getCrystalSn(result[3])+" to board sn#"+board
+        else:
+            print "failed: insert record error"
+            
     @pyqtSignature("")
     def on_unbindButton_clicked(self):
-        print "unbind crystal "+self.crystalLine.text()+" from board "+self.boardLine.text()
+        print "to unbind crystal sn#"+self.crystalLine.text()+" or/and board sn#"+self.boardLine.text()
         crystal=self.crystalLine.text()
         board=self.boardLine.text()
+        
         result=self.unbind(crystal, board)
+        
         if result[0]:
             print "done: unbind crystal sn#"+crystal+" from board sn#"+board
+            return
         
         if result[1]:
-            print "done: unbind crystal sn#"+crystal
+            print "done: unbind crystal sn#"+crystal+" from board sn#"+self.getBoardSn(result[4])
             
         if result[2]:
-            print "done: unbind  board sn#"+board
+            print "done: unbind  crystal sn#"+self.getCrystalSn(result[3])+" from board sn#"+board
+                
+        if not crystal.isEmpty() and not result[1]:
+            if not result[3]:
+                print "failed: no record for crystal sn#"+crystal
+            else:
+                print "failed: no binding record for crystal sn#"+crystal
+            
+        if not board.isEmpty() and not result[2]:
+            if not result[4]:
+                print "failed: no record for board sn#"+board
+            else:
+                print "failed: no binding record for board sn#"+board
 
-        #[detached, crystalid, boardid]=self.unbind(crystal, board)
-        #if detached:
-        #    print "done: unbind crystal sn#"+self.getCrystalSn(crystalid)+" from board sn#"+self.getBoardSn(boardid)
-        #else:
-        #    print "do again: unbind crystal sn#"+self.getCrystalSn(crystalid)+" from board sn#"+self.getBoardSn(boardid)
     
     @pyqtSignature("")
     def on_queryButton_clicked(self):
-        print self.boardLine.text()
-
-    def addCrystal(self, sn):
-        query = QSqlQuery()
-        query.exec_("SELECT id FROM crystal WHERE sn='"+sn+"'" )
-    
-        if not query.next():
-            print "insert new crystal"
-            query.prepare("INSERT INTO crystal (sn) "
-                    "VALUES (:sn)")
-            query.bindValue(":sn", sn)
-            query.exec_()
-            query.exec_("SELECT id FROM crystal WHERE sn='"+sn+"'" )
-            query.next()
+        print "to query crystal sn#"+self.crystalLine.text()+" or/and board sn#"+self.boardLine.text()
+        crystal=self.crystalLine.text()
+        board=self.boardLine.text()
+        
+        result=self.query(crystal, board)
+        
+        if result[0]:
+            print "is binding: crystal sn#"+crystal+" to board sn#"+board
+            return
+        
+        if result[1]:
+            print "is binding: crystal sn#"+crystal+" to board sn#"+self.getBoardSn(result[4])
             
-        crystalid = query.value(0).toInt()[0]
-        return crystalid
-
-    def addBoard(self, sn):
-        query = QSqlQuery()
-        query.exec_("SELECT id FROM board WHERE sn='"+sn+"'" )
-    
-        if not query.next():
-            print "insert new board"
-            query.prepare("INSERT INTO board (sn) "
-                    "VALUES (:sn)")
-            query.bindValue(":sn", sn)
-            query.exec_()
-            query.exec_("SELECT id FROM board WHERE sn='"+sn+"'" )
-            query.next()    
+        if result[2]:
+            print "is binding: crystal sn#"+self.getCrystalSn(result[3])+" to board sn#"+board
+                
+        if not crystal.isEmpty() and not result[1]:
+            if not result[3]:
+                print "no record: for crystal sn#"+crystal
+            else:
+                print "no binding: no binding record for crystal sn#"+crystal
             
-        boardid = query.value(0).toInt()[0]
-        return boardid
+        if not board.isEmpty() and not result[2]:
+            if not result[4]:
+                print "no record: for board sn#"+board
+            else:
+                print "no binding: no binding record for board sn#"+board
+
 
     def bind(self, crystal, board):
         crystalid=self.addCrystal(crystal)
         boardid=self.addBoard(board)
-        print "bind crystal id "+str(crystalid)+" to board id "+str(boardid)
+        
+        #result[0] is False: All binding already
+        #result[1] is False: crystal binding already
+        #result[2] is False: board binding already
+        #result[0,1,2] are all True, and crystalid & boardid are valid : binding OK
+        #result[0,1,2] are all False, and crystalid & boardid are valid: binding failed
+        result=[True, True, True, crystalid, boardid]
+        
+        if not crystalid or not boardid:
+            return result
+        
         if self.isBinding(crystalid, boardid):
-            print "impossible, binding already"
-            return True
+            #print "impossible, binding already"
+            result[0]=False
+            return result
+        
         if self.isBinding(crystalid):
-            print "failed, crystal is binding already, unbind first"
-            #self.getCrystalBinding(crystalid)
-            return False
+            #print "failed: crystal is binding already, unbind first"
+            boardid=self.getCrystalBinding(crystalid)
+            result[1]=False
+            result[4]=boardid
+            return result
+        
         if self.isBinding(0, boardid):
-            print "failed, board is binding already, unbind first"
-            #self.getBoardBinding(boardid)
-            return False
+            #print "failed: board is binding already, unbind first"
+            crystalid=self.getBoardBinding(boardid)
+            result[2]=False
+            result[3]=crystalid
+            return result
+        
         query = QSqlQuery()
         query.prepare("INSERT INTO bind (crystalid, boardid, status, time, operator) "
                      "VALUES (:crystalid, :boardid, :status, now(), user())") 
@@ -234,33 +278,69 @@ class MainForm(QDialog,
         query.bindValue(":boardid", boardid)
         query.bindValue(":status", "binding")
         query.exec_()
-        return True
+        
+        if not self.isBinding(crystalid, boardid):
+            result[0]=False
+            result[1]=False
+            result[2]=False
+        
+        return result
+
+    def query(self, crystal, board):
+        crystalid=self.getCrystalId(crystal)
+        boardid=self.getBoardId(board)
+        print "query crystal id "+str(crystalid)+" and/or board id "+str(boardid)
+        
+        #result[0] is True: All binding
+        #result[1] is True: crystal is binding to other board
+        #result[2] is True: other crystal is binding to board
+        result=[False, False, False, crystalid, boardid]
+        
+        if crystalid and boardid:
+            if self.isBinding(crystalid, boardid):
+                result[0]=True
+        
+        elif crystalid:
+            if self.isBinding(crystalid):
+                boardid=self.getCrystalBinding(crystalid)
+                result[1]=True
+                result[4]=boardid
+                
+        elif boardid:
+            if self.isBinding(0, boardid):
+                crystalid=self.getBoardBinding(boardid)
+                result[2]=True
+                result[3]=crystalid
+                
+        return result
 
     def unbind(self, crystal, board):
         crystalid=self.getCrystalId(crystal)
         boardid=self.getBoardId(board)
         
-        result=[False, False, False]
+        #result[0] is True: detach OK
+        #result[1] is True: detach crystal from other board OK
+        #result[2] is True: detach other crystal from board OK
+        result=[False, False, False, crystalid, boardid]
         
         if crystalid and boardid:
             if self.isBinding(crystalid, boardid):
-                return [self.detach(crystalid, boardid), False, False]
+                result[0]=self.detach(crystalid, boardid)
         
-        if crystalid:
+        elif crystalid:
             if self.isBinding(crystalid):
                 boardid=self.getCrystalBinding(crystalid)
                 #print "impossible, crystal is binding to boardid %d"%boardid
-                #return [self.detach(crystalid, boardid), crystalid, boardid]
                 result[1]=self.detach(crystalid, boardid)
-        
-        if boardid:    
+                result[4]=boardid
+                
+        elif boardid:
             if self.isBinding(0, boardid):
                 crystalid=self.getBoardBinding(boardid)
                 #print "impossible, board is binding to crystalid %d"%crystalid
-                #return [False, crystalid, boardid]
                 result[2]=self.detach(crystalid, boardid)
+                result[3]=crystalid
                 
-        #return [result, crystalid, boardid]
         return result
         
     #There are two steps of detach: first insert then update
@@ -295,7 +375,7 @@ class MainForm(QDialog,
         elif boardid:
             query.exec_("SELECT status FROM bind WHERE boardid="+str(boardid))
         else:
-            #cannot be all zero
+            #cannot be all zero, fatal error
             sys.exit(1)
         
         while query.next():
@@ -311,7 +391,7 @@ class MainForm(QDialog,
         query.exec_("SELECT boardid FROM bind WHERE crystalid="+str(crystalid)+" and status='binding'")
         if query.next():
             boardid = query.value(0).toInt()[0]
-            print "return boardid "+str(boardid)
+            #print "return boardid "+str(boardid)
             return boardid
         else:
             return 0
@@ -321,7 +401,7 @@ class MainForm(QDialog,
         query.exec_("SELECT crystalid FROM bind WHERE boardid="+str(boardid)+" and status='binding'")
         if query.next():
             crystalid = query.value(0).toInt()[0]
-            print "return crystalid "+str(crystalid)
+            #print "return crystalid "+str(crystalid)
             return crystalid
         else:
             return 0
@@ -359,6 +439,42 @@ class MainForm(QDialog,
             return 0
             
         return query.value(0).toInt()[0]
+
+    def addCrystal(self, sn):
+        query = QSqlQuery()
+        query.exec_("SELECT id FROM crystal WHERE sn='"+sn+"'" )
+    
+        if not query.next():
+            print "insert new crystal"
+            query.prepare("INSERT INTO crystal (sn) "
+                    "VALUES (:sn)")
+            query.bindValue(":sn", sn)
+            query.exec_()
+            
+            query.exec_("SELECT id FROM crystal WHERE sn='"+sn+"'" )
+            if not query.next():
+                return 0
+            
+        crystalid = query.value(0).toInt()[0]
+        return crystalid
+
+    def addBoard(self, sn):
+        query = QSqlQuery()
+        query.exec_("SELECT id FROM board WHERE sn='"+sn+"'" )
+    
+        if not query.next():
+            print "insert new board"
+            query.prepare("INSERT INTO board (sn) "
+                    "VALUES (:sn)")
+            query.bindValue(":sn", sn)
+            query.exec_()
+            
+            query.exec_("SELECT id FROM board WHERE sn='"+sn+"'" )
+            if not query.next():
+                return 0    
+            
+        boardid = query.value(0).toInt()[0]
+        return boardid
 
     def addAsset(self):
         row = self.assetView.currentIndex().row() \
