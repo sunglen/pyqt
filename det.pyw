@@ -130,9 +130,11 @@ class MainForm(QDialog,
         if self.crystalLine.text().length()<6 and self.boardLine.text().length()<9:
             self.queryButton.setEnabled(False)
             self.unbindButton.setEnabled(False)
+            self.listButton.setEnabled(False)
         else:
             self.queryButton.setEnabled(True)
             self.unbindButton.setEnabled(True)
+            self.listButton.setEnabled(True)
             
         #if self.crystalLine.text().isEmpty() or self.boardLine.text().isEmpty():
         if self.crystalLine.text().length()<6 or self.boardLine.text().length()<9:
@@ -190,10 +192,16 @@ class MainForm(QDialog,
         
         if result[1]:
             print "done: unbind crystal sn#"+crystal+" from board sn#"+self.getBoardSn(result[4])
+            return
             
         if result[2]:
             print "done: unbind  crystal sn#"+self.getCrystalSn(result[3])+" from board sn#"+board
-                
+            return
+        
+        if result[3] and result[4]:
+            print "failed: no binding record for crystal sn#"+crystal+" to board sn#"+board
+            return
+
         if not crystal.isEmpty() and not result[1]:
             if not result[3]:
                 print "failed: no record for crystal sn#"+crystal
@@ -221,9 +229,15 @@ class MainForm(QDialog,
         
         if result[1]:
             print "is binding: crystal sn#"+crystal+" to board sn#"+self.getBoardSn(result[4])
+            return
             
         if result[2]:
             print "is binding: crystal sn#"+self.getCrystalSn(result[3])+" to board sn#"+board
+            return
+            
+        if result[3] and result[4]:
+            print "no binding: crystal sn#"+crystal+" to board sn#"+board
+            return
                 
         if not crystal.isEmpty() and not result[1]:
             if not result[3]:
@@ -237,6 +251,10 @@ class MainForm(QDialog,
             else:
                 print "no binding: no binding record for board sn#"+board
 
+
+    @pyqtSignature("")
+    def on_listButton_clicked(self):
+        print "to list crystal sn#"+self.crystalLine.text()+" or/and board sn#"+self.boardLine.text()
 
     def bind(self, crystal, board):
         crystalid=self.addCrystal(crystal)

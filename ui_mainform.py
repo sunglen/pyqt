@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'mainform.ui'
 #
-# Created: Wed Nov  8 15:39:31 2017
+# Created: Fri Nov 10 17:40:27 2017
 #      by: PyQt4 UI code generator 4.11.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -26,7 +26,7 @@ except AttributeError:
 class Ui_MainForm(object):
     def setupUi(self, MainForm):
         MainForm.setObjectName(_fromUtf8("MainForm"))
-        MainForm.resize(487, 365)
+        MainForm.resize(573, 407)
         self.userLine = QtGui.QLineEdit(MainForm)
         self.userLine.setGeometry(QtCore.QRect(90, 20, 113, 27))
         self.userLine.setObjectName(_fromUtf8("userLine"))
@@ -68,8 +68,11 @@ class Ui_MainForm(object):
         self.queryButton.setGeometry(QtCore.QRect(250, 200, 98, 27))
         self.queryButton.setObjectName(_fromUtf8("queryButton"))
         self.closeButton = QtGui.QPushButton(MainForm)
-        self.closeButton.setGeometry(QtCore.QRect(250, 290, 98, 27))
+        self.closeButton.setGeometry(QtCore.QRect(440, 20, 98, 27))
         self.closeButton.setObjectName(_fromUtf8("closeButton"))
+        self.listButton = QtGui.QPushButton(MainForm)
+        self.listButton.setGeometry(QtCore.QRect(440, 140, 98, 27))
+        self.listButton.setObjectName(_fromUtf8("listButton"))
 
         self.retranslateUi(MainForm)
         QtCore.QObject.connect(self.closeButton, QtCore.SIGNAL(_fromUtf8("clicked()")), MainForm.reject)
@@ -87,4 +90,5 @@ class Ui_MainForm(object):
         self.unbindButton.setText(_translate("MainForm", "Unbind", None))
         self.queryButton.setText(_translate("MainForm", "Query", None))
         self.closeButton.setText(_translate("MainForm", "Close", None))
+        self.listButton.setText(_translate("MainForm", "List", None))
 
