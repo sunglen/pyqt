@@ -115,12 +115,34 @@ def createFakeData():
 class MainForm(QDialog,
                ui_mainform.Ui_MainForm):
 
+    login=False
+    
     def __init__(self):
         super(MainForm, self).__init__()
         self.setupUi(self)
         self.updateUi()
+        self.updateUser()
+    
+    def updateUser(self):
+        query = QSqlQuery()
+        query.exec_("SELECT User FROM mysql.user WHERE User <> 'root'")
+        while query.next():
+            user=query.value(0).toString()
+            self.userComboBox.addItem(user)
 
     def updateUi(self):
+        if not self.login:
+            self.bindButton.setEnabled(False)
+            self.queryButton.setEnabled(False)
+            self.unbindButton.setEnabled(False)
+            self.listButton.setEnabled(False)
+            return
+        
+        self.loginButton.setEnabled(False)
+        self.passLine.setReadOnly(True)
+        #self.userComboBox.setEditable(False)
+        #self.userComboBox.setMaxVisibleItems(0)
+        
         #validate user input, min character numbers is useless.
         self.crystalLine.setValidator(QRegExpValidator(QRegExp("[0-9A-Za-z\-]{6,20}"), self))
         self.boardLine.setValidator(QRegExpValidator(QRegExp("[0-9A-Za-z\-]{9,20}"), self))
@@ -141,6 +163,26 @@ class MainForm(QDialog,
             self.bindButton.setEnabled(False)
         else:
             self.bindButton.setEnabled(True)
+
+    @pyqtSignature("")
+    def on_loginButton_clicked(self):
+        print self.userComboBox.currentText()+" try to login by password "+self.passLine.text()
+        username=self.userComboBox.currentText()
+        password=self.passLine.text()
+        
+        db = QSqlDatabase.addDatabase("QMYSQL")
+        db.setHostName("localhost")
+        db.setUserName(username)
+        db.setPassword(password)
+        db.setDatabaseName("det")
+        
+        #test connection
+        if db.open():
+            self.login=True
+        else:
+            QMessageBox.warning(None, u"探测器模块组装记录", u'密码错误')
+        
+        self.updateUi()    
 
     @pyqtSignature("QString")
     def on_crystalLine_textEdited(self, text):
@@ -224,7 +266,7 @@ class MainForm(QDialog,
     
     @pyqtSignature("")
     def on_queryButton_clicked(self):
-        print "to query crystal sn#"+self.crystalLine.text()+" or/and board sn#"+self.boardLine.text()
+        self.resultBrowser.setText("to query crystal sn#"+self.crystalLine.text()+" or/and board sn#"+self.boardLine.text())
         crystal=self.crystalLine.text()
         board=self.boardLine.text()
         
