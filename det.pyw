@@ -184,35 +184,42 @@ class MainForm(QDialog,
         crystal=self.crystalLine.text()
         board=self.boardLine.text()
         
-        result=self.unbind(crystal, board)
+        crystalid=0
+        boardid=0
+        
+        if not crystal.isEmpty():
+            crystalid=self.getCrystalId(crystal)
+            if crystalid:
+                print "unbind crystal id "+str(crystalid)
+            else:
+                print "failed: no record for crystal sn#"+crystal
+                
+        if not board.isEmpty():
+            boardid=self.getBoardId(board)
+            if boardid:
+                print "unbind board id "+str(boardid)
+            else:
+                print "failed: no record for board sn#"+board
+        
+        if crystalid or boardid:
+            result=self.unbind(crystalid, boardid)
+        else:
+            return
         
         if result[0]:
             print "done: unbind crystal sn#"+crystal+" from board sn#"+board
-            return
-        
-        if result[1]:
-            print "done: unbind crystal sn#"+crystal+" from board sn#"+self.getBoardSn(result[4])
-            return
-            
-        if result[2]:
-            print "done: unbind  crystal sn#"+self.getCrystalSn(result[3])+" from board sn#"+board
-            return
-        
-        if result[3] and result[4]:
+        elif result[1]:
+            print "done: unbind crystal sn#"+crystal+" from board sn#"+self.getBoardSn(result[4])       
+        elif result[2]:
+            print "done: unbind  crystal sn#"+self.getCrystalSn(result[3])+" from board sn#"+board     
+        elif crystalid and boardid:
             print "failed: no binding record for crystal sn#"+crystal+" to board sn#"+board
+        elif crystalid:
+            print "failed: no binding record for crystal sn#"+crystal     
+        elif boardid:
+            print "failed: no binding record for board sn#"+board
+        else:
             return
-
-        if not crystal.isEmpty() and not result[1]:
-            if not result[3]:
-                print "failed: no record for crystal sn#"+crystal
-            else:
-                print "failed: no binding record for crystal sn#"+crystal
-            
-        if not board.isEmpty() and not result[2]:
-            if not result[4]:
-                print "failed: no record for board sn#"+board
-            else:
-                print "failed: no binding record for board sn#"+board
 
     
     @pyqtSignature("")
@@ -221,40 +228,104 @@ class MainForm(QDialog,
         crystal=self.crystalLine.text()
         board=self.boardLine.text()
         
-        result=self.query(crystal, board)
+        crystalid=0
+        boardid=0
+        
+        if not crystal.isEmpty():
+            crystalid=self.getCrystalId(crystal)
+            if crystalid:
+                print "query crystal id "+str(crystalid)
+            else:
+                print "no record: for crystal sn#"+crystal
+                
+        if not board.isEmpty():
+            boardid=self.getBoardId(board)
+            if boardid:
+                print "query board id "+str(boardid)
+            else:
+                print "no record: for board sn#"+board
+        
+        if crystalid or boardid:
+            result=self.query(crystalid, boardid)
+        else:
+            return
         
         if result[0]:
-            print "is binding: crystal sn#"+crystal+" to board sn#"+board
-            return
-        
-        if result[1]:
-            print "is binding: crystal sn#"+crystal+" to board sn#"+self.getBoardSn(result[4])
-            return
-            
-        if result[2]:
-            print "is binding: crystal sn#"+self.getCrystalSn(result[3])+" to board sn#"+board
-            return
-            
-        if result[3] and result[4]:
+            print "is binding: crystal sn#"+crystal+" to board sn#"+board+" at "+self.getBindingTime(result[3], result[4])
+        elif result[1]:
+            print "is binding: crystal sn#"+crystal+" to board sn#"+self.getBoardSn(result[4])+" at "+self.getBindingTime(result[3], result[4])
+        elif result[2]:
+            print "is binding: crystal sn#"+self.getCrystalSn(result[3])+" to board sn#"+board+" at "+self.getBindingTime(result[3], result[4])
+        elif crystalid and boardid:
             print "no binding: crystal sn#"+crystal+" to board sn#"+board
+        elif crystalid:
+            print "no binding: for crystal sn#"+crystal
+        elif boardid:
+            print "no binding: for board sn#"+board
+        else:
             return
-                
-        if not crystal.isEmpty() and not result[1]:
-            if not result[3]:
-                print "no record: for crystal sn#"+crystal
-            else:
-                print "no binding: no binding record for crystal sn#"+crystal
-            
-        if not board.isEmpty() and not result[2]:
-            if not result[4]:
-                print "no record: for board sn#"+board
-            else:
-                print "no binding: no binding record for board sn#"+board
 
 
     @pyqtSignature("")
     def on_listButton_clicked(self):
         print "to list crystal sn#"+self.crystalLine.text()+" or/and board sn#"+self.boardLine.text()
+        crystal=self.crystalLine.text()
+        board=self.boardLine.text()
+        
+        crystalid=0
+        boardid=0
+        
+        if not crystal.isEmpty():
+            crystalid=self.getCrystalId(crystal)
+            if crystalid:
+                print "list crystal id "+str(crystalid)
+            else:
+                print "no record: for crystal sn#"+crystal
+                
+        if not board.isEmpty():
+            boardid=self.getBoardId(board)
+            if boardid:
+                print "list board id "+str(boardid)
+            else:
+                print "no record: for board sn#"+board
+        
+        if crystalid or boardid:
+            result=self.query(crystalid, boardid)
+        else:
+            return
+        
+        query = QSqlQuery()
+        
+        if result[0]:
+            print "is binding: crystal sn#"+crystal+" to board sn#"+board+" at "+self.getBindingTime(result[3], result[4])
+            query.exec_("SELECT crystalid,boardid,status,time,operator FROM bind WHERE crystalid="+str(crystalid)+" and boardid="+str(boardid)+" ORDER BY time")
+        elif result[1]:
+            print "is binding: crystal sn#"+crystal+" to board sn#"+self.getBoardSn(result[4])+" at "+self.getBindingTime(result[3], result[4])
+            query.exec_("SELECT crystalid,boardid,status,time,operator FROM bind WHERE crystalid="+str(crystalid)+" ORDER BY time")
+        elif result[2]:
+            print "is binding: crystal sn#"+self.getCrystalSn(result[3])+" to board sn#"+board+" at "+self.getBindingTime(result[3], result[4])
+            query.exec_("SELECT crystalid,boardid,status,time,operator FROM bind WHERE boardid="+str(boardid)+" ORDER BY time")
+        elif crystalid and boardid:
+            print "no binding: crystal sn#"+crystal+" to board sn#"+board
+            #query.exec_("SELECT crystalid,boardid,status,time,operator FROM bind WHERE crystalid="+str(crystalid)+" ORDER BY time")
+            #query.exec_("SELECT crystalid,boardid,status,time,operator FROM bind WHERE boardid="+str(boardid)+" ORDER BY time")
+            query.exec_("SELECT crystalid,boardid,status,time,operator FROM bind WHERE crystalid="+str(crystalid)+" or boardid="+str(boardid)+" ORDER BY time")
+        elif crystalid:
+            print "no binding: for crystal sn#"+crystal
+            query.exec_("SELECT crystalid,boardid,status,time,operator FROM bind WHERE crystalid="+str(crystalid)+" ORDER BY time")
+        elif boardid:
+            print "no binding: for board sn#"+board
+            query.exec_("SELECT crystalid,boardid,status,time,operator FROM bind WHERE boardid="+str(boardid)+" ORDER BY time")
+        else:
+            return
+        
+        while query.next():
+            crystalid=query.value(0).toInt()[0]
+            boardid=query.value(1).toInt()[0]
+            status=query.value(2).toString()
+            time=query.value(3).toString()
+            operator=query.value(4).toString()
+            print self.getCrystalSn(crystalid)+" , "+self.getBoardSn(boardid)+" , "+status+" , "+time+" , "+operator
 
     def bind(self, crystal, board):
         crystalid=self.addCrystal(crystal)
@@ -304,41 +375,41 @@ class MainForm(QDialog,
         
         return result
 
-    def query(self, crystal, board):
-        crystalid=self.getCrystalId(crystal)
-        boardid=self.getBoardId(board)
-        print "query crystal id "+str(crystalid)+" and/or board id "+str(boardid)
+    def query(self, crystalid, boardid):
         
-        #result[0] is True: All binding
-        #result[1] is True: crystal is binding to other board
-        #result[2] is True: other crystal is binding to board
-        result=[False, False, False, crystalid, boardid]
+        #result[0] is True: crystal is binding to board.
+        #result[1] is True: crystal is binding to other board, result[4] is the boardid.
+        #result[2] is True: other crystal is binding to board, result[3] is the crystalid.
+        #result[5] is the binding time.
+        result=[False, False, False, crystalid, boardid, time]
         
         if crystalid and boardid:
             if self.isBinding(crystalid, boardid):
                 result[0]=True
+                result[5]=self.getBindingTime(result[3], result[4])
         
         elif crystalid:
             if self.isBinding(crystalid):
                 boardid=self.getCrystalBinding(crystalid)
                 result[1]=True
                 result[4]=boardid
+                result[5]=self.getBindingTime(result[3], result[4])
                 
         elif boardid:
             if self.isBinding(0, boardid):
                 crystalid=self.getBoardBinding(boardid)
                 result[2]=True
                 result[3]=crystalid
+                result[5]=self.getBindingTime(result[3], result[4])
                 
+        #result[5]=self.getBindingTime(result[3], result[4])
+        
         return result
 
-    def unbind(self, crystal, board):
-        crystalid=self.getCrystalId(crystal)
-        boardid=self.getBoardId(board)
-        
+    def unbind(self, crystalid, boardid):
         #result[0] is True: detach OK
-        #result[1] is True: detach crystal from other board OK
-        #result[2] is True: detach other crystal from board OK
+        #result[1] is True: detach crystal from other board OK,result[4] is the boardid.
+        #result[2] is True: detach other crystal from board OK, result[3] is the crystalid.
         result=[False, False, False, crystalid, boardid]
         
         if crystalid and boardid:
@@ -423,6 +494,16 @@ class MainForm(QDialog,
             return crystalid
         else:
             return 0
+        
+    def getBindingTime(self, crystalid, boardid):
+        query = QSqlQuery()
+        query.exec_("SELECT time FROM bind WHERE crystalid="+str(crystalid)+" and boardid="+str(boardid)+" and status='binding'")
+        if query.next():
+            bindingTime = query.value(0).toString()
+            return bindingTime
+        else:
+            return ''
+  
         
     def getCrystalSn(self, id):
         query = QSqlQuery()
