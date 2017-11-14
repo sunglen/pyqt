@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>594</width>
-    <height>462</height>
+    <width>633</width>
+    <height>645</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,194 +17,171 @@
    <property name="geometry">
     <rect>
      <x>20</x>
-     <y>320</y>
-     <width>551</width>
-     <height>111</height>
+     <y>240</y>
+     <width>581</width>
+     <height>341</height>
     </rect>
    </property>
-  </widget>
-  <widget class="QWidget" name="verticalLayoutWidget">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>20</y>
-     <width>91</width>
-     <height>80</height>
-    </rect>
+   <property name="font">
+    <font>
+     <pointsize>12</pointsize>
+    </font>
    </property>
-   <layout class="QVBoxLayout" name="verticalLayout_2">
-    <item>
-     <widget class="QLabel" name="label_1">
-      <property name="text">
-       <string>Username</string>
-      </property>
-     </widget>
-    </item>
-    <item>
-     <widget class="QLabel" name="label_2">
-      <property name="text">
-       <string>Password</string>
-      </property>
-     </widget>
-    </item>
-   </layout>
-  </widget>
-  <widget class="QWidget" name="verticalLayoutWidget_2">
-   <property name="geometry">
-    <rect>
-     <x>120</x>
-     <y>20</y>
-     <width>121</width>
-     <height>80</height>
-    </rect>
-   </property>
-   <layout class="QVBoxLayout" name="verticalLayout_3">
-    <item>
-     <widget class="QComboBox" name="userComboBox"/>
-    </item>
-    <item>
-     <widget class="QLineEdit" name="passLine">
-      <property name="echoMode">
-       <enum>QLineEdit::Password</enum>
-      </property>
-     </widget>
-    </item>
-   </layout>
-  </widget>
-  <widget class="QWidget" name="horizontalLayoutWidget">
-   <property name="geometry">
-    <rect>
-     <x>250</x>
-     <y>20</y>
-     <width>87</width>
-     <height>80</height>
-    </rect>
-   </property>
-   <layout class="QHBoxLayout" name="horizontalLayout_6">
-    <item>
-     <widget class="QPushButton" name="loginButton">
-      <property name="text">
-       <string>Login</string>
-      </property>
-     </widget>
-    </item>
-   </layout>
-  </widget>
-  <widget class="QWidget" name="verticalLayoutWidget_3">
-   <property name="geometry">
-    <rect>
-     <x>440</x>
-     <y>20</y>
-     <width>91</width>
-     <height>80</height>
-    </rect>
-   </property>
-   <layout class="QVBoxLayout" name="verticalLayout_4">
-    <item>
-     <widget class="QPushButton" name="closeButton">
-      <property name="text">
-       <string>Close</string>
-      </property>
-     </widget>
-    </item>
-   </layout>
-  </widget>
-  <widget class="QWidget" name="verticalLayoutWidget_4">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>150</y>
-     <width>81</width>
-     <height>121</height>
-    </rect>
-   </property>
-   <layout class="QVBoxLayout" name="verticalLayout_6">
-    <item>
-     <widget class="QLabel" name="label_3">
-      <property name="text">
-       <string>Crystal</string>
-      </property>
-     </widget>
-    </item>
-    <item>
-     <widget class="QLabel" name="label_4">
-      <property name="text">
-       <string>Board</string>
-      </property>
-     </widget>
-    </item>
-   </layout>
-  </widget>
-  <widget class="QWidget" name="verticalLayoutWidget_5">
-   <property name="geometry">
-    <rect>
-     <x>120</x>
-     <y>139</y>
-     <width>191</width>
-     <height>161</height>
-    </rect>
-   </property>
-   <layout class="QVBoxLayout" name="verticalLayout_7">
-    <item>
-     <widget class="QLineEdit" name="crystalLine"/>
-    </item>
-    <item>
-     <widget class="QLineEdit" name="boardLine"/>
-    </item>
-   </layout>
-  </widget>
-  <widget class="QWidget" name="verticalLayoutWidget_6">
-   <property name="geometry">
-    <rect>
-     <x>330</x>
-     <y>150</y>
-     <width>131</width>
-     <height>131</height>
-    </rect>
-   </property>
-   <layout class="QVBoxLayout" name="verticalLayout_8">
-    <item>
-     <widget class="QPushButton" name="bindButton">
-      <property name="text">
-       <string>Bind</string>
-      </property>
-     </widget>
-    </item>
-   </layout>
   </widget>
   <widget class="QWidget" name="verticalLayoutWidget_7">
    <property name="geometry">
     <rect>
-     <x>490</x>
-     <y>150</y>
-     <width>91</width>
-     <height>121</height>
+     <x>480</x>
+     <y>40</y>
+     <width>101</width>
+     <height>171</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" name="verticalLayout_10">
     <item>
-     <widget class="QPushButton" name="unbindButton">
+     <widget class="QPushButton" name="queryButton">
+      <property name="font">
+       <font>
+        <pointsize>15</pointsize>
+       </font>
+      </property>
       <property name="text">
-       <string>Unbind</string>
+       <string>查询</string>
       </property>
      </widget>
     </item>
     <item>
-     <widget class="QPushButton" name="queryButton">
-      <property name="text">
-       <string>Query</string>
+     <spacer name="verticalSpacer">
+      <property name="orientation">
+       <enum>Qt::Vertical</enum>
       </property>
-     </widget>
+      <property name="sizeHint" stdset="0">
+       <size>
+        <width>20</width>
+        <height>20</height>
+       </size>
+      </property>
+     </spacer>
     </item>
     <item>
      <widget class="QPushButton" name="listButton">
+      <property name="font">
+       <font>
+        <pointsize>15</pointsize>
+       </font>
+      </property>
       <property name="text">
-       <string>List</string>
+       <string>高级查询</string>
       </property>
      </widget>
     </item>
    </layout>
   </widget>
+  <widget class="QWidget" name="gridLayoutWidget">
+   <property name="geometry">
+    <rect>
+     <x>40</x>
+     <y>10</y>
+     <width>421</width>
+     <height>231</height>
+    </rect>
+   </property>
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="6" column="0">
+     <widget class="QLabel" name="label_4">
+      <property name="font">
+       <font>
+        <pointsize>16</pointsize>
+       </font>
+      </property>
+      <property name="text">
+       <string>AD板序列号</string>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="0">
+     <widget class="QLabel" name="label_3">
+      <property name="font">
+       <font>
+        <pointsize>16</pointsize>
+       </font>
+      </property>
+      <property name="text">
+       <string>晶体序列号</string>
+      </property>
+     </widget>
+    </item>
+    <item row="6" column="1">
+     <widget class="QLineEdit" name="boardLine">
+      <property name="font">
+       <font>
+        <pointsize>16</pointsize>
+        <weight>75</weight>
+        <bold>true</bold>
+       </font>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="1">
+     <widget class="QLineEdit" name="crystalLine">
+      <property name="font">
+       <font>
+        <pointsize>16</pointsize>
+        <weight>75</weight>
+        <bold>true</bold>
+       </font>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="1">
+     <widget class="QPushButton" name="bindButton">
+      <property name="font">
+       <font>
+        <pointsize>20</pointsize>
+       </font>
+      </property>
+      <property name="text">
+       <string>绑    定</string>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="0">
+     <widget class="QPushButton" name="unbindButton">
+      <property name="font">
+       <font>
+        <pointsize>15</pointsize>
+       </font>
+      </property>
+      <property name="text">
+       <string>解绑</string>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QPushButton" name="closeButton">
+   <property name="geometry">
+    <rect>
+     <x>260</x>
+     <y>590</y>
+     <width>99</width>
+     <height>37</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>15</pointsize>
+    </font>
+   </property>
+   <property name="text">
+    <string>退出</string>
+   </property>
+  </widget>
+  <zorder>resultBrowser</zorder>
+  <zorder>verticalLayoutWidget_7</zorder>
+  <zorder>loginButton</zorder>
+  <zorder>gridLayoutWidget</zorder>
+  <zorder>closeButton</zorder>
  </widget>
  <resources/>
  <connections>

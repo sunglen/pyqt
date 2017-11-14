@@ -4,12 +4,19 @@
 import os
 import sys
 import time
+import re
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from PyQt4.QtSql import *
 import ui_mainform
+import ui_loginform
 import qrc_resources
 
+LOGIN=False
+DB_SERVER="localhost"
+DB_NAME="det"
+ROOT_PASS="glop3c"
+MESSAGE_TITLE=u"组装记录数据库"
 
 def createFakeData():
     import random
@@ -112,13 +119,10 @@ def createFakeData():
                      "where crystalid="+str(crystalid)+" and boardid="+str(boardid)+" and status='binding'")
     query.exec_()
 
-class MainForm(QDialog,
-               ui_mainform.Ui_MainForm):
 
-    login=False
-    
+class LoginForm(QDialog, ui_loginform.Ui_LoginForm):
     def __init__(self):
-        super(MainForm, self).__init__()
+        super(LoginForm, self).__init__()
         self.setupUi(self)
         self.updateUi()
         self.updateUser()
@@ -131,17 +135,51 @@ class MainForm(QDialog,
             self.userComboBox.addItem(user)
 
     def updateUi(self):
-        if not self.login:
+        global LOGIN
+        if LOGIN:
+            self.loginButton.setEnabled(False)
+            self.passLine.setReadOnly(True)
+
+    @pyqtSignature("")
+    def on_loginButton_clicked(self):
+        self.loginTextEdit.setText(u"用户"+self.userComboBox.currentText()+u"正在登录服务器"+DB_SERVER+u"上的数据库"+DB_NAME)
+        username=self.userComboBox.currentText()
+        password=self.passLine.text()
+        
+        db = QSqlDatabase.addDatabase("QMYSQL")
+        db.setHostName(DB_SERVER)
+        db.setUserName(username)
+        db.setPassword(password)
+        db.setDatabaseName(DB_NAME)
+        
+        #test connection
+        if db.open():
+            global LOGIN
+            LOGIN=True
+            self.loginTextEdit.append(u"<font color=green>登录OK。</font>"+u"组装记录数据库可供使用。")
+        else:
+            QMessageBox.warning(None, MESSAGE_TITLE, u'密码错误')
+        
+        self.updateUi()
+
+
+class MainForm(QDialog,
+               ui_mainform.Ui_MainForm):
+
+    #login=False
+    def __init__(self):
+        super(MainForm, self).__init__()
+        self.setupUi(self)
+        self.updateUi()
+
+    def updateUi(self):
+        global LOGIN
+        if not LOGIN:
             self.bindButton.setEnabled(False)
             self.queryButton.setEnabled(False)
             self.unbindButton.setEnabled(False)
             self.listButton.setEnabled(False)
             return
-        
-        self.loginButton.setEnabled(False)
-        self.passLine.setReadOnly(True)
-        #self.userComboBox.setEditable(False)
-        #self.userComboBox.setMaxVisibleItems(0)
         
         #validate user input, min character numbers is useless.
         self.crystalLine.setValidator(QRegExpValidator(QRegExp("[0-9A-Za-z\-]{6,20}"), self))
@@ -164,26 +202,6 @@ class MainForm(QDialog,
         else:
             self.bindButton.setEnabled(True)
 
-    @pyqtSignature("")
-    def on_loginButton_clicked(self):
-        print self.userComboBox.currentText()+" try to login by password "+self.passLine.text()
-        username=self.userComboBox.currentText()
-        password=self.passLine.text()
-        
-        db = QSqlDatabase.addDatabase("QMYSQL")
-        db.setHostName("localhost")
-        db.setUserName(username)
-        db.setPassword(password)
-        db.setDatabaseName("det")
-        
-        #test connection
-        if db.open():
-            self.login=True
-        else:
-            QMessageBox.warning(None, u"探测器模块组装记录", u'密码错误')
-        
-        self.updateUi()    
-
     @pyqtSignature("QString")
     def on_crystalLine_textEdited(self, text):
         self.updateUi()
@@ -203,20 +221,26 @@ class MainForm(QDialog,
         #crystalid or boardid is invalid, fatal error
         if not result[3]:
             print "Crystal record is NOT exist and CANNOT be added"
+            QMessageBox.warning(None, MESSAGE_TITLE, u'无法添加晶体记录。请检查数据库连接与用户权限。')
             sys.exit(1)
             
         if not result[4]:
             print "Board record is NOT exist and CANNOT be added"
+            QMessageBox.warning(None, MESSAGE_TITLE, u'无法添加AD板记录。请检查数据库连接与用户权限。')
             sys.exit(1)
         
         if result[0] and result[1] and result[2]:
             print "done: binding crystal sn#"+crystal+" to board sn#"+board
+            self.resultBrowser.append(u"绑定成功：晶体序列号#"+crystal+u"绑定AD板序列号#"+board)
         elif not result[0] and result[1] and result[2]:
             print "failed: already binding crystal sn#"+crystal+" to board sn#"+board
+            self.resultBrowser.append(u"<font color=red>绑定失败</font>：晶体序列号#"+crystal+u"与AD板序列号#"+board+u"已经绑定")
         elif result[0] and not result[1] and result[2]:
             print "falied: already binding crystal sn#"+crystal+" to board sn#"+self.getBoardSn(result[4])
+            self.resultBrowser.append(u"<font color=red>绑定失败</font>：晶体序列号#"+crystal+u"与AD板序列号#"+self.getBoardSn(result[4])+u"已经绑定")
         elif result[0] and result[1] and not result[2]:
             print "falied: already binding crystal sn#"+self.getCrystalSn(result[3])+" to board sn#"+board
+            self.resultBrowser.append(u"<font color=red>绑定失败</font>：晶体序列号#"+self.getCrystalSn(result[3])+u"与AD板序列号#"+board+u"已经绑定")
         else:
             print "failed: insert record error"
             
@@ -235,6 +259,7 @@ class MainForm(QDialog,
                 print "unbind crystal id "+str(crystalid)
             else:
                 print "failed: no record for crystal sn#"+crystal
+                self.resultBrowser.append(u"<font color=red>失败</font>：晶体序列号#"+crystal+u"无记录")
                 
         if not board.isEmpty():
             boardid=self.getBoardId(board)
@@ -242,6 +267,7 @@ class MainForm(QDialog,
                 print "unbind board id "+str(boardid)
             else:
                 print "failed: no record for board sn#"+board
+                self.resultBrowser.append(u"<font color=red>失败</font>：AD板序列号#"+board+u"无记录")
         
         if crystalid or boardid:
             result=self.unbind(crystalid, boardid)
@@ -250,23 +276,29 @@ class MainForm(QDialog,
         
         if result[0]:
             print "done: unbind crystal sn#"+crystal+" from board sn#"+board
+            self.resultBrowser.append(u"解绑成功：晶体序列号#"+crystal+u"脱离AD板序列号#"+board)
         elif result[1]:
-            print "done: unbind crystal sn#"+crystal+" from board sn#"+self.getBoardSn(result[4])       
+            print "done: unbind crystal sn#"+crystal+" from board sn#"+self.getBoardSn(result[4])
+            self.resultBrowser.append(u"解绑成功：晶体序列号#"+crystal+u"脱离AD板序列号#"+self.getBoardSn(result[4]))
         elif result[2]:
-            print "done: unbind  crystal sn#"+self.getCrystalSn(result[3])+" from board sn#"+board     
+            print "done: unbind  crystal sn#"+self.getCrystalSn(result[3])+" from board sn#"+board
+            self.resultBrowser.append(u"解绑成功：晶体序列号#"+self.getCrystalSn(result[3])+u"脱离AD板序列号#"+board)
         elif crystalid and boardid:
             print "failed: no binding record for crystal sn#"+crystal+" to board sn#"+board
+            self.resultBrowser.append(u"<font color=red>解绑失败</font>：晶体序列号#"+crystal+u"与AD板序列号#"+board+u"未绑定")
         elif crystalid:
             print "failed: no binding record for crystal sn#"+crystal     
+            self.resultBrowser.append(u"<font color=red>解绑失败</font>：晶体序列号#"+crystal+u"未绑定")
         elif boardid:
             print "failed: no binding record for board sn#"+board
+            self.resultBrowser.append(u"<font color=red>解绑失败</font>：AD板序列号#"+board+u"未绑定")
         else:
             return
 
     
     @pyqtSignature("")
     def on_queryButton_clicked(self):
-        self.resultBrowser.setText("to query crystal sn#"+self.crystalLine.text()+" or/and board sn#"+self.boardLine.text())
+        #self.resultBrowser.setText(u"<font color=red>查询</font>晶体序列号#"+self.crystalLine.text()+u"或/与AD板序列号#"+self.boardLine.text())
         crystal=self.crystalLine.text()
         board=self.boardLine.text()
         
@@ -279,6 +311,7 @@ class MainForm(QDialog,
                 print "query crystal id "+str(crystalid)
             else:
                 print "no record: for crystal sn#"+crystal
+                self.resultBrowser.append(u"无记录：晶体序列号#"+crystal)
                 
         if not board.isEmpty():
             boardid=self.getBoardId(board)
@@ -286,6 +319,7 @@ class MainForm(QDialog,
                 print "query board id "+str(boardid)
             else:
                 print "no record: for board sn#"+board
+                self.resultBrowser.append(u"无记录：AD板序列号#"+board)
         
         if crystalid or boardid:
             result=self.query(crystalid, boardid)
@@ -294,16 +328,22 @@ class MainForm(QDialog,
         
         if result[0]:
             print "is binding: crystal sn#"+crystal+" to board sn#"+board+" at "+self.getBindingTime(result[3], result[4])
+            self.resultBrowser.append(u"已绑定：晶体序列号#"+crystal+u"与AD板序列号#"+board+u"于"+self.getBindingTime(result[3], result[4]))
         elif result[1]:
             print "is binding: crystal sn#"+crystal+" to board sn#"+self.getBoardSn(result[4])+" at "+self.getBindingTime(result[3], result[4])
+            self.resultBrowser.append(u"已绑定：晶体序列号#"+crystal+u"与AD板序列号#"+self.getBoardSn(result[4])+u"于"+self.getBindingTime(result[3], result[4]))
         elif result[2]:
             print "is binding: crystal sn#"+self.getCrystalSn(result[3])+" to board sn#"+board+" at "+self.getBindingTime(result[3], result[4])
+            self.resultBrowser.append(u"已绑定：晶体序列号#"+self.getCrystalSn(result[3])+u"与AD板序列号#"+board+u"于"+self.getBindingTime(result[3], result[4]))
         elif crystalid and boardid:
             print "no binding: crystal sn#"+crystal+" to board sn#"+board
+            self.resultBrowser.append(u"未绑定：晶体序列号#"+crystal+u"到AD板序列号#"+board)
         elif crystalid:
             print "no binding: for crystal sn#"+crystal
+            self.resultBrowser.append(u"未绑定：晶体序列号#"+crystal)
         elif boardid:
             print "no binding: for board sn#"+board
+            self.resultBrowser.append(u"未绑定：AD板序列号#"+board)
         else:
             return
 
@@ -323,6 +363,7 @@ class MainForm(QDialog,
                 print "list crystal id "+str(crystalid)
             else:
                 print "no record: for crystal sn#"+crystal
+                self.resultBrowser.append(u"无记录：晶体序列号#"+crystal)
                 
         if not board.isEmpty():
             boardid=self.getBoardId(board)
@@ -330,6 +371,7 @@ class MainForm(QDialog,
                 print "list board id "+str(boardid)
             else:
                 print "no record: for board sn#"+board
+                self.resultBrowser.append(u"无记录：AD板序列号#"+board)
         
         if crystalid or boardid:
             result=self.query(crystalid, boardid)
@@ -340,6 +382,7 @@ class MainForm(QDialog,
         
         if result[0]:
             print "is binding: crystal sn#"+crystal+" to board sn#"+board+" at "+self.getBindingTime(result[3], result[4])
+            #self.resultBrowser.append(u"已绑定：晶体序列号#"+crystal+u"与AD板序列号#"+board+u"于"+self.getBindingTime(result[3], result[4]))
             query.exec_("SELECT crystalid,boardid,status,time,operator FROM bind WHERE crystalid="+str(crystalid)+" and boardid="+str(boardid)+" ORDER BY time")
         elif result[1]:
             print "is binding: crystal sn#"+crystal+" to board sn#"+self.getBoardSn(result[4])+" at "+self.getBindingTime(result[3], result[4])
@@ -361,14 +404,36 @@ class MainForm(QDialog,
         else:
             return
         
+        table='<TABLE BORDER="1" BGCOLOR="" ALIGN="LEFT">'
+        table+=u"<TR><TD>晶体序列号#</TD><TD>AD板序列号#</TD><TD>绑定状态</TD><TD>操作时间</TD><TD>操作者</TD></TR>"
+        
         while query.next():
             crystalid=query.value(0).toInt()[0]
             boardid=query.value(1).toInt()[0]
+            
             status=query.value(2).toString()
+            if status == "binding":
+                status=u"<font color=red>绑定</font>"
+            elif status == "bound":
+                status=u"曾绑"
+            elif status == "unbind":
+                status=u"解绑"
+                
             time=query.value(3).toString()
+            time.replace('T', ' ')
+            
             operator=query.value(4).toString()
-            print self.getCrystalSn(crystalid)+" , "+self.getBoardSn(boardid)+" , "+status+" , "+time+" , "+operator
-
+            exp=re.compile("@.*")
+            #str() CANNOT convert utf-8 chinese charactor
+            operator=exp.sub('', str(operator))
+            
+            #print self.getCrystalSn(crystalid)+" , "+self.getBoardSn(boardid)+" , "+status+" , "+time+" , "+operator
+            table+="<TR><TD>"+self.getCrystalSn(crystalid)+"</TD><TD>"+self.getBoardSn(boardid)+"</TD><TD>"+status+"</TD><TD>"+time+"</TD><TD>"+operator+"</TD></TR>"
+        
+        table+="</TABLE>"
+        #self.resultBrowser.append(table)
+        self.resultBrowser.setText(table)
+        
     def bind(self, crystal, board):
         crystalid=self.addCrystal(crystal)
         boardid=self.addBoard(board)
@@ -695,21 +760,19 @@ class MainForm(QDialog,
 def main():
     app = QApplication(sys.argv)
 
-    dbname="det"
-
     db = QSqlDatabase.addDatabase("QMYSQL")
     #todo: get host, user and password from diaglog
-    db.setHostName("localhost")
+    db.setHostName(DB_SERVER)
     db.setUserName("root")
-    db.setPassword("glop3c")
+    db.setPassword(ROOT_PASS)
     
     #test connection
     if not db.open():
-        QMessageBox.warning(None, u"探测器模块组装记录",
+        QMessageBox.warning(None, MESSAGE_TITLE,
             QString("Database Error: %1").arg(db.lastError().text()))
         sys.exit(1)
         
-    db.setDatabaseName(dbname)
+    db.setDatabaseName(DB_NAME)
 
     if db.open():
         create=False
@@ -723,7 +786,7 @@ def main():
         query.exec_("CREATE DATABASE IF NOT EXISTS "+dbname)        
         db.setDatabaseName(dbname)
         if not db.open():
-            QMessageBox.warning(None, u"探测器模块组装记录",
+            QMessageBox.warning(None, MESSAGE_TITLE,
                 QString("Database Error: %1").arg(db.lastError().text()))
             sys.exit(1)
         
@@ -744,6 +807,10 @@ def main():
 
     form = MainForm()
     form.show()
+    
+    form_login=LoginForm()
+    form_login.show()
+    
     if create:
         splash.close()
         app.processEvents()
