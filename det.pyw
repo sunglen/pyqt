@@ -783,8 +783,8 @@ def main():
         db.setDatabaseName('')
         db.open()
         query=QSqlQuery()
-        query.exec_("CREATE DATABASE IF NOT EXISTS "+dbname)        
-        db.setDatabaseName(dbname)
+        query.exec_("CREATE DATABASE IF NOT EXISTS "+DB_NAME)        
+        db.setDatabaseName(DB_NAME)
         if not db.open():
             QMessageBox.warning(None, MESSAGE_TITLE,
                 QString("Database Error: %1").arg(db.lastError().text()))
