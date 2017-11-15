@@ -24,7 +24,7 @@
    </property>
    <property name="font">
     <font>
-     <pointsize>12</pointsize>
+     <pointsize>13</pointsize>
     </font>
    </property>
   </widget>
@@ -177,11 +177,6 @@
     <string>退出</string>
    </property>
   </widget>
-  <zorder>resultBrowser</zorder>
-  <zorder>verticalLayoutWidget_7</zorder>
-  <zorder>loginButton</zorder>
-  <zorder>gridLayoutWidget</zorder>
-  <zorder>closeButton</zorder>
  </widget>
  <resources/>
  <connections>

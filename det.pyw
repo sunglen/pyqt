@@ -328,13 +328,13 @@ class MainForm(QDialog,
         
         if result[0]:
             print "is binding: crystal sn#"+crystal+" to board sn#"+board+" at "+self.getBindingTime(result[3], result[4])
-            self.resultBrowser.append(u"已绑定：晶体序列号#"+crystal+u"与AD板序列号#"+board+u"于"+self.getBindingTime(result[3], result[4]))
+            self.resultBrowser.append(u"已绑定：晶体序列号#"+crystal+u"与AD板序列号#"+board+u"于"+self.getBindingTime(result[3], result[4]).replace('T', ' '))
         elif result[1]:
             print "is binding: crystal sn#"+crystal+" to board sn#"+self.getBoardSn(result[4])+" at "+self.getBindingTime(result[3], result[4])
-            self.resultBrowser.append(u"已绑定：晶体序列号#"+crystal+u"与AD板序列号#"+self.getBoardSn(result[4])+u"于"+self.getBindingTime(result[3], result[4]))
+            self.resultBrowser.append(u"已绑定：晶体序列号#"+crystal+u"与AD板序列号#"+self.getBoardSn(result[4])+u"于"+self.getBindingTime(result[3], result[4]).replace('T', ' '))
         elif result[2]:
             print "is binding: crystal sn#"+self.getCrystalSn(result[3])+" to board sn#"+board+" at "+self.getBindingTime(result[3], result[4])
-            self.resultBrowser.append(u"已绑定：晶体序列号#"+self.getCrystalSn(result[3])+u"与AD板序列号#"+board+u"于"+self.getBindingTime(result[3], result[4]))
+            self.resultBrowser.append(u"已绑定：晶体序列号#"+self.getCrystalSn(result[3])+u"与AD板序列号#"+board+u"于"+self.getBindingTime(result[3], result[4]).replace('T', ' '))
         elif crystalid and boardid:
             print "no binding: crystal sn#"+crystal+" to board sn#"+board
             self.resultBrowser.append(u"未绑定：晶体序列号#"+crystal+u"到AD板序列号#"+board)
@@ -404,8 +404,9 @@ class MainForm(QDialog,
         else:
             return
         
-        table='<TABLE BORDER="1" BGCOLOR="" ALIGN="LEFT">'
-        table+=u"<TR><TD>晶体序列号#</TD><TD>AD板序列号#</TD><TD>绑定状态</TD><TD>操作时间</TD><TD>操作者</TD></TR>"
+        bgColor="LightGreen"
+        table='<TABLE BORDER="1" ALIGN="LEFT">'
+        table+=u"<TR BGCOLOR="+bgColor+u"><TD>晶体序列号#</TD><TD>AD板序列号#</TD><TD>绑定状态</TD><TD>操作时间</TD><TD>操作者</TD></TR>"
         
         while query.next():
             crystalid=query.value(0).toInt()[0]
@@ -413,11 +414,15 @@ class MainForm(QDialog,
             
             status=query.value(2).toString()
             if status == "binding":
-                status=u"<font color=red>绑定</font>"
+                #statusHan=u"<font color=red>绑定</font>"
+                statusHan=u"绑定"
+                bgColor="LightCoral"
             elif status == "bound":
-                status=u"曾绑"
+                statusHan=u"曾绑"
+                bgColor="LightGoldenRodYellow"
             elif status == "unbind":
-                status=u"解绑"
+                statusHan=u"解绑"
+                bgColor="LightCyan"
                 
             time=query.value(3).toString()
             time.replace('T', ' ')
@@ -428,7 +433,7 @@ class MainForm(QDialog,
             operator=exp.sub('', str(operator))
             
             #print self.getCrystalSn(crystalid)+" , "+self.getBoardSn(boardid)+" , "+status+" , "+time+" , "+operator
-            table+="<TR><TD>"+self.getCrystalSn(crystalid)+"</TD><TD>"+self.getBoardSn(boardid)+"</TD><TD>"+status+"</TD><TD>"+time+"</TD><TD>"+operator+"</TD></TR>"
+            table+="<TR BGCOLOR="+bgColor+"><TD>"+self.getCrystalSn(crystalid)+"</TD><TD>"+self.getBoardSn(boardid)+"</TD><TD>"+statusHan+"</TD><TD>"+time+"</TD><TD>"+operator+"</TD></TR>"
         
         table+="</TABLE>"
         #self.resultBrowser.append(table)

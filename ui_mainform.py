@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'mainform.ui'
 #
-# Created: Tue Nov 14 19:04:26 2017
+# Created: Wed Nov 15 17:16:51 2017
 #      by: PyQt4 UI code generator 4.11.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -30,7 +30,7 @@ class Ui_MainForm(object):
         self.resultBrowser = QtGui.QTextBrowser(MainForm)
         self.resultBrowser.setGeometry(QtCore.QRect(20, 240, 581, 341))
         font = QtGui.QFont()
-        font.setPointSize(12)
+        font.setPointSize(13)
         self.resultBrowser.setFont(font)
         self.resultBrowser.setObjectName(_fromUtf8("resultBrowser"))
         self.verticalLayoutWidget_7 = QtGui.QWidget(MainForm)
