@@ -13,14 +13,16 @@ import ui_loginform
 import qrc_resources
 
 LOGIN=False
+SELECT=False
+INSERT=False
+UPDATE=False
+
 DB_SERVER="localhost"
 DB_NAME="det"
 ROOT_PASS="glop3c"
 MESSAGE_TITLE=u"组装记录数据库"
 
-def createFakeData():
-    import random
-
+def dropTables():
     print "Dropping tables..."
     query = QSqlQuery()
     #must drop table bind first because of foreign key.
@@ -30,7 +32,9 @@ def createFakeData():
 
     QApplication.processEvents()
 
+def createTables():
     print "Creating tables..."
+    query = QSqlQuery()
     query.exec_("""CREATE TABLE crystal (
                 id INTEGER PRIMARY KEY AUTO_INCREMENT UNIQUE NOT NULL,
                 sn VARCHAR(20) UNIQUE NOT NULL,
@@ -52,7 +56,9 @@ def createFakeData():
 
     QApplication.processEvents()
 
+def createFakeData():
     print "Populating tables..."
+    query = QSqlQuery()
     query.exec_("INSERT INTO crystal (sn) "
                 "VALUES ('6G0124')")
     query.exec_("INSERT INTO crystal (sn) "
@@ -106,7 +112,7 @@ def createFakeData():
     #query.bindValue(":operator", "user()")
     query.exec_()
         
-    time.sleep(5)
+    time.sleep(3)
 
     query.prepare("INSERT INTO bind (crystalid, boardid, status, time, operator) "
                      "VALUES (:crystalid, :boardid, :status, now(), user())") 
@@ -119,6 +125,7 @@ def createFakeData():
                      "where crystalid="+str(crystalid)+" and boardid="+str(boardid)+" and status='binding'")
     query.exec_()
 
+    QApplication.processEvents()
 
 class LoginForm(QDialog, ui_loginform.Ui_LoginForm):
     def __init__(self):
@@ -139,12 +146,59 @@ class LoginForm(QDialog, ui_loginform.Ui_LoginForm):
         if LOGIN:
             self.loginButton.setEnabled(False)
             self.passLine.setReadOnly(True)
+            
+    def haveSelectPriv(self, username):
+        query = QSqlQuery()
+        query.exec_("SELECT Select_priv FROM mysql.user WHERE User = '"+username+"'")
+        if query.next():
+            priv=query.value(0).toString()
+            if priv == "Y":
+                return True
+        return False
+
+    def haveInsertPriv(self, username):
+        query = QSqlQuery()
+        query.exec_("SELECT Insert_priv FROM mysql.user WHERE User = '"+username+"'")
+        if query.next():
+            priv=query.value(0).toString()
+            if priv == "Y":
+                return True
+        return False
+
+    def haveUpdatePriv(self, username):
+        query = QSqlQuery()
+        query.exec_("SELECT Update_priv FROM mysql.user WHERE User = '"+username+"'")
+        if query.next():
+            priv=query.value(0).toString()
+            if priv == "Y":
+                return True
+        return False
 
     @pyqtSignature("")
     def on_loginButton_clicked(self):
-        self.loginTextEdit.setText(u"用户"+self.userComboBox.currentText()+u"正在登录服务器"+DB_SERVER+u"上的数据库"+DB_NAME)
+        global LOGIN, SELECT, INSERT, UPDATE
+        
         username=self.userComboBox.currentText()
         password=self.passLine.text()
+        
+        #check priv for username by root
+        SELECT=True
+        INSERT=True
+        UPDATE=True
+        
+        if not self.haveSelectPriv(username):
+            privMsg1=u"<font color=red>用户"+username+u"没有查询记录权限，因此无法使用查询、高级查询、绑定、解绑功能。</font>"
+            SELECT=False
+
+        if not self.haveInsertPriv(username):
+            privMsg2=u"<font color=red>用户"+username+u"没有插入记录权限，因此无法使用绑定及解绑功能。</font>"
+            INSERT=False                
+        
+        if not self.haveUpdatePriv(username):
+            privMsg3=u"<font color=red>用户"+username+u"没有更新记录权限，因此无法使用绑定及解绑功能。</font>"
+            UPDATE=False
+        
+        self.loginTextEdit.setText(u"用户"+username+u"正在登录服务器"+DB_SERVER+u"上的数据库"+DB_NAME)
         
         db = QSqlDatabase.addDatabase("QMYSQL")
         db.setHostName(DB_SERVER)
@@ -154,11 +208,23 @@ class LoginForm(QDialog, ui_loginform.Ui_LoginForm):
         
         #test connection
         if db.open():
-            global LOGIN
             LOGIN=True
-            self.loginTextEdit.append(u"<font color=green>登录OK。</font>"+u"组装记录数据库可供使用。")
+            self.loginTextEdit.append(u"<font color=green>用户"+username+u"登录OK。</font>")
+            if not SELECT:
+                self.loginTextEdit.append(privMsg1)
+                
+            if not INSERT:
+                self.loginTextEdit.append(privMsg2)
+                
+            if not UPDATE:
+                self.loginTextEdit.append(privMsg3)   
         else:
             QMessageBox.warning(None, MESSAGE_TITLE, u'密码错误')
+            #re-connect by root
+            db.close()
+            db.setUserName('root')
+            db.setPassword(ROOT_PASS)
+            db.open()
         
         self.updateUi()
 
@@ -173,8 +239,8 @@ class MainForm(QDialog,
         self.updateUi()
 
     def updateUi(self):
-        global LOGIN
-        if not LOGIN:
+        global LOGIN, SELECT, INSERT, UPDATE
+        if not LOGIN or not SELECT:
             self.bindButton.setEnabled(False)
             self.queryButton.setEnabled(False)
             self.unbindButton.setEnabled(False)
@@ -201,6 +267,10 @@ class MainForm(QDialog,
             self.bindButton.setEnabled(False)
         else:
             self.bindButton.setEnabled(True)
+            
+        if not INSERT or not UPDATE:
+            self.unbindButton.setEnabled(False)
+            self.bindButton.setEnabled(False)
 
     @pyqtSignature("QString")
     def on_crystalLine_textEdited(self, text):
@@ -687,80 +757,6 @@ class MainForm(QDialog,
         boardid = query.value(0).toInt()[0]
         return boardid
 
-    def addAsset(self):
-        row = self.assetView.currentIndex().row() \
-            if self.assetView.currentIndex().isValid() else 0
-
-        QSqlDatabase.database().transaction()
-        self.assetModel.insertRow(row)
-        index = self.assetModel.index(row, NAME)
-        self.assetView.setCurrentIndex(index)
-
-        assetid = 1
-        query = QSqlQuery()
-        query.exec_("SELECT MAX(id) FROM assets")
-        if query.next():
-            assetid = query.value(0).toInt()[0]
-        query.prepare("INSERT INTO logs (assetid, date, actionid) "
-                      "VALUES (:assetid, :date, :actionid)")
-        query.bindValue(":assetid", QVariant(assetid + 1))
-        query.bindValue(":date", QVariant(QDate.currentDate()))
-        query.bindValue(":actionid", QVariant(ACQUIRED))
-        query.exec_()
-        QSqlDatabase.database().commit()
-        self.assetView.edit(index)
-
-
-    def deleteAsset(self):
-        index = self.assetView.currentIndex()
-        if not index.isValid():
-            return
-        QSqlDatabase.database().transaction()
-        record = self.assetModel.record(index.row())
-        assetid = record.value(ID).toInt()[0]
-        logrecords = 1
-        query = QSqlQuery(QString("SELECT COUNT(*) FROM logs "
-                                  "WHERE assetid = %1").arg(assetid))
-        if query.next():
-            logrecords = query.value(0).toInt()[0]
-        msg = QString("<font color=red>Delete</font><br><b>%1</b>"
-                      "<br>from room %2") \
-                      .arg(record.value(NAME).toString()) \
-                      .arg(record.value(ROOM).toString())
-        if logrecords > 1:
-            msg += QString(", along with %1 log records") \
-                   .arg(logrecords)
-        msg += "?"
-        if QMessageBox.question(self, "Delete Asset", msg,
-                QMessageBox.Yes|QMessageBox.No) == QMessageBox.No:
-            QSqlDatabase.database().rollback()
-            return
-        query.exec_(QString("DELETE FROM logs WHERE assetid = %1") \
-                    .arg(assetid))
-        self.assetModel.removeRow(index.row())
-        self.assetModel.submitAll()
-        QSqlDatabase.database().commit()
-        self.assetChanged(self.assetView.currentIndex())
-
-    def deleteAction(self):
-        index = self.logView.currentIndex()
-        if not index.isValid():
-            return
-        record = self.logModel.record(index.row())
-        action = record.value(ACTIONID).toString()
-        if action == "Acquired":
-            QMessageBox.information(self, "Delete Log",
-                    "The 'Acquired' log record cannot be deleted.<br>"
-                    "You could delete the entire asset instead.")
-            return
-        when = unicode(record.value(DATE).toString())
-        if QMessageBox.question(self, "Delete Log",
-                "Delete log<br>%s %s?" % (when, action),
-                QMessageBox.Yes|QMessageBox.No) == QMessageBox.No:
-            return
-        self.logModel.removeRow(index.row())
-        self.logModel.submitAll()
-
 
 def main():
     app = QApplication(sys.argv)
@@ -808,7 +804,10 @@ def main():
                     (rect.height() - pixmap.height()) / 2)
         splash.show()
         app.processEvents()
-        createFakeData()
+        
+        #dropTables()
+        createTables()
+        #createFakeData()
 
     form = MainForm()
     form.show()
