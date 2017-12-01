@@ -177,6 +177,16 @@
     <string>退出</string>
    </property>
   </widget>
+  <widget class="QLineEdit" name="snLine">
+   <property name="geometry">
+    <rect>
+     <x>480</x>
+     <y>10</y>
+     <width>113</width>
+     <height>27</height>
+    </rect>
+   </property>
+  </widget>
  </widget>
  <resources/>
  <connections>

@@ -1,0 +1,19 @@
+# ge.sun @ sinovision
+
+1. install python-2.7.amd64.msi, setuptools and PyInstaller-3.3 on development PC
+2. install PyQt4-4.11.2-gpl-Py2.7-Qt4.8.6-x64.exe on development PC
+3. ONLY FOR DATABASE SERVER SUPPOSED TO RUN ON WINDOWS 
+    3.1 install bitnami-wampstack-7.1.10-1-windows-installer.exe on server
+    3.2 set the root password of MySQL Database, remember it.
+    3.3 remember the IP of DB server.
+    3.4 run bitnami wampstack
+4. edit dbtool.py on development PC
+    4.1 set DB_SERVER to correct IP address, see section 3.3
+    4.2 set ROOT_PASS to root password of MySQL, see section 3.2
+5. run "make" on development PC
+    5.1 "make" will generate detdb.exe in dist directory.
+    5.2 if change anything, run "make clean" before "make"
+6. create user account of MySQL
+    6.1 use root account login to http://DB_SERVER/phpmyadmin
+    6.2 create user account in phpmyadmin web pages
+    6.3 distribute detdb.exe and user account to client

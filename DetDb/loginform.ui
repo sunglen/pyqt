@@ -9,7 +9,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>429</width>
+    <width>428</width>
     <height>272</height>
    </rect>
   </property>
@@ -22,7 +22,7 @@
      <x>20</x>
      <y>10</y>
      <width>391</width>
-     <height>131</height>
+     <height>168</height>
     </rect>
    </property>
    <layout class="QHBoxLayout" name="horizontalLayout_3">
@@ -79,20 +79,50 @@
         </property>
        </widget>
       </item>
+      <item row="0" column="3">
+       <widget class="QPushButton" name="toBindButton">
+        <property name="font">
+         <font>
+          <family>Ubuntu</family>
+          <pointsize>15</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>要绑定</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="3">
+       <layout class="QVBoxLayout" name="verticalLayout_2">
+        <item>
+         <widget class="QPushButton" name="toUnbindButton">
+          <property name="font">
+           <font>
+            <family>Ubuntu</family>
+            <pointsize>15</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string>要解绑</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="toQueryButton">
+          <property name="font">
+           <font>
+            <family>Ubuntu</family>
+            <pointsize>15</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string>要查询</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
      </layout>
-    </item>
-    <item>
-     <widget class="QPushButton" name="loginButton">
-      <property name="font">
-       <font>
-        <family>Ubuntu</family>
-        <pointsize>15</pointsize>
-       </font>
-      </property>
-      <property name="text">
-       <string>登录</string>
-      </property>
-     </widget>
     </item>
    </layout>
   </widget>
@@ -100,7 +130,7 @@
    <property name="geometry">
     <rect>
      <x>20</x>
-     <y>160</y>
+     <y>180</y>
      <width>391</width>
      <height>80</height>
     </rect>
@@ -110,7 +140,7 @@
      <widget class="QTextEdit" name="loginTextEdit">
       <property name="font">
        <font>
-        <pointsize>13</pointsize>
+        <pointsize>11</pointsize>
        </font>
       </property>
       <property name="readOnly">
@@ -126,7 +156,7 @@
        </font>
       </property>
       <property name="text">
-       <string>关闭</string>
+       <string>退出</string>
       </property>
      </widget>
     </item>
@@ -134,22 +164,5 @@
   </widget>
  </widget>
  <resources/>
- <connections>
-  <connection>
-   <sender>loginCloseButton</sender>
-   <signal>clicked()</signal>
-   <receiver>LoginForm</receiver>
-   <slot>reject()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>328</x>
-     <y>53</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>199</x>
-     <y>149</y>
-    </hint>
-   </hints>
-  </connection>
- </connections>
+ <connections/>
 </ui>
