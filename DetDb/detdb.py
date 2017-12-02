@@ -83,7 +83,36 @@ class detdb():
         query.prepare("UPDATE bind set time='"+time+"' "
                          "where crystalid="+str(crystalid)+" and boardid="+str(boardid)+" and status='binding'")
         query.exec_()
+    
+    def haveDbUser(self, username):
+        query = QSqlQuery()
+        query.exec_("SELECT User FROM mysql.user WHERE User = '"+username+"'")
+        if query.next():
+            user=query.value(0).toString()
+            if user == username:
+                return True
+        return False
+    
+    def createDbUser(self, type, username, password):
+        if type == 'bind':
+            priv='SELECT, INSERT, UPDATE'
+        else:
+            priv='SELECT'
+            
+        query = QSqlQuery()
+        query.exec_("create user '"+username+"' identified by '"+password+"'")
+        query.exec_("grant "+priv+" on *.* to '"+username+"'")
         
+        if type == 'bind': 
+            return self.haveSelectPriv(username) and self.haveInsertPriv(username) and self.haveUpdatePriv(username)
+        else:
+            return self.haveSelectPriv(username)
+    
+    def updatePass(self, username, password):
+        query = QSqlQuery()
+        query.exec_("update mysql.user set authentication_string=password('"+password+"') where User = '"+username+"'")
+        query.exec_("flush privileges")
+            
     def importData(self, crystal, board, time):
         
         if not self.matchCrystalSn(crystal):
