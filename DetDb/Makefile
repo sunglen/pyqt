@@ -3,14 +3,16 @@
 #Linux without wrap: make ui
 #Windows to generate exe: make
 
-MAIN := dbtool.py import-tool.py
+MAIN := dbtool.py import-tool.py admintool.py
 
 #EXE := $(patsubst %.py, dist\\%.exe, $(MAIN))
 EXE := $(patsubst %.py, %.exe, $(MAIN))
 
 ELF := $(patsubst %.py, %, $(MAIN))
 
-DEL := rm -f
+BUILD_DIR := build
+
+DEL := rm -rf
 PYUIC4 := pyuic4
 PYRCC4 := pyrcc4
 PYWRAP := pyinstaller
@@ -49,3 +51,4 @@ clean:
 	$(DEL) $(QRCPY)
 	$(DEL) $(PYC)
 	$(DEL) $(ELF)
+	$(DEL) $(BUILD_DIR)

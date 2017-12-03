@@ -19,21 +19,6 @@ if not db.open(DB_SERVER, "root", ROOT_PASS):
     print 'connect server failed'
     sys.exit(1)
 
-#connect to a database
-if db.open(DB_SERVER, "root", ROOT_PASS, DB_NAME):
-    print 'connect database ok'
-else:
-    print "create database..."
-    #re-connect
-    db.open(DB_SERVER, "root", ROOT_PASS)
-    
-    db.createDb(DB_NAME)
-    
-    if db.open(DB_SERVER, "root", ROOT_PASS, DB_NAME):
-        print "ok"
-    else:
-        print "failed"
-        sys.exit(1)
 
 if db.haveDbUser(sys.argv[1]):
     print "user "+username+" exist, update its password."
