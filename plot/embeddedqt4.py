@@ -1,7 +1,10 @@
 #!/usr/bin/env python
 # coding=utf-8
 # matplotlib example modified by Glen
-# many on https://matplotlib.org/examples/
+# see matplotlib/figure.py for Figure Class Usage
+# see matplotlib/axes/_axes.py for axes usage
+# and for basic knowledge, see:
+# https://matplotlib.org/tutorials/index.html
 
 import sys
 import time
@@ -30,7 +33,8 @@ class ApplicationWindow(QtGui.QMainWindow):
         #self.addToolBar(QtCore.Qt.BottomToolBarArea, NavigationToolbar(static_canvas, self))
 
         self.fig2=Figure(figsize=(5, 3))
-        self.axes2=self.fig2.add_subplot(111)
+        #self.axes2=self.fig2.add_subplot(111)
+        self.axes2 = self.fig2.add_axes([0,0,1,1])
         self.dynamic_canvas = FigureCanvas(self.fig2)
         layout.addWidget(self.dynamic_canvas)
         layout.addWidget(NavigationToolbar(self.dynamic_canvas, self))
