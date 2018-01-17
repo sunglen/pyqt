@@ -1,5 +1,3 @@
-# ge.sun @ sinovision
-
 1. install python-2.7.amd64.msi, setuptools and PyInstaller-3.3 on development PC
 2. install PyQt4-4.11.2-gpl-Py2.7-Qt4.8.6-x64.exe on development PC
 3. ONLY FOR DATABASE SERVER SUPPOSED TO RUN ON WINDOWS 

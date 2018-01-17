@@ -1,7 +1,7 @@
 #Makefile for PYQT4 project
-#ge.sun @ sinovision
-#Linux without wrap: make ui
-#Windows to generate exe: make
+#ge.sun 
+#usage: make ui
+#generate exe or elf: make
 
 MAIN := dbtool.py import-tool.py admintool.py
 

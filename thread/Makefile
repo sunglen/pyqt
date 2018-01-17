@@ -1,5 +1,5 @@
 #Makefile for PYQT4 project
-#ge.sun @ sinovision
+#ge.sun
 #without wrap: make ui
 #generate exe or elf: make
 

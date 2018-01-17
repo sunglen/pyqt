@@ -1,7 +1,4 @@
 #Makefile for PYQT4 project
-#ge.sun @ sinovision
-#without wrap: make ui
-#generate exe or elf: make
 
 MAIN := newsig.py
 
